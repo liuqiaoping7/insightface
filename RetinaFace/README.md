@@ -2,7 +2,7 @@
 
 ## Introduction
 
-RetinaFace is a practical single-stage [SOTA](http://shuoyang1213.me/WIDERFACE/WiderFace_Results.html) face detector which is initially described in [arXiv technical report](https://arxiv.org/abs/1905.00641)
+RetinaFace is a practical single-stage [SOTA](http://shuoyang1213.me/WIDERFACE/WiderFace_Results.html) face detector which is initially introduced in [arXiv technical report](https://arxiv.org/abs/1905.00641) and then accepted by [CVPR 2020](https://openaccess.thecvf.com/content_CVPR_2020/html/Deng_RetinaFace_Single-Shot_Multi-Level_Face_Localisation_in_the_Wild_CVPR_2020_paper.html).
 
 ![demoimg1](https://github.com/deepinsight/insightface/blob/master/resources/11513D05.jpg)
 
@@ -66,24 +66,18 @@ To avoid the confliction with the WiderFace Challenge (ICCV 2019), we postpone t
 ## Third-party Models
 
 [yangfly](https://github.com/yangfly): RetinaFace-MobileNet0.25 ([baidu cloud](https://pan.baidu.com/s/1P1ypO7VYUbNAezdvLm2m9w)).
-
 WiderFace validation mAP: Hard 82.5. (model size: 1.68Mb) 
+
+[clancylian](https://github.com/clancylian/retinaface): C++ version
 
 ## References
 
-```
-@inproceedings{yang2016wider,
-title = {WIDER FACE: A Face Detection Benchmark},
-author = {Yang, Shuo and Luo, Ping and Loy, Chen Change and Tang, Xiaoou},
+```  
+@inproceedings{Deng2020CVPR,
+title = {RetinaFace: Single-Shot Multi-Level Face Localisation in the Wild},
+author = {Deng, Jiankang and Guo, Jia and Ververas, Evangelos and Kotsia, Irene and Zafeiriou, Stefanos},
 booktitle = {CVPR},
-year = {2016}
-}
-  
-@inproceedings{deng2019retinaface,
-title={RetinaFace: Single-stage Dense Face Localisation in the Wild},
-author={Deng, Jiankang and Guo, Jia and Yuxiang, Zhou and Jinke Yu and Irene Kotsia and Zafeiriou, Stefanos},
-booktitle={arxiv},
-year={2019}
+year = {2020}
 }
 ```
 
