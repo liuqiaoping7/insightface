@@ -22,6 +22,7 @@ config.backbone_lr = 0.1
 config.memory_bank_lr = config.backbone_lr
 config.sample_ratio = 1.0
 
+
 def generate_config(loss_name, dataset, network):
 
     # loss
@@ -47,8 +48,8 @@ def generate_config(loss_name, dataset, network):
 
     # glint360k 17091657
     # md5sum:
-    # train.rec 2a74c71c4d20e770273f103eda97e878
-    # train.idx f7a3e98d3533ac481bdf3dc03a5416e8
+    # 5d9cd9f262ec87a5ca2eac5e703f7cdf train.idx
+    # 8483be5af6f9906e19f85dee49132f8e train.rec
 
     # make training faster
     # our RAM is 256G
@@ -56,8 +57,10 @@ def generate_config(loss_name, dataset, network):
 
     elif dataset == 'glint360k_8GPU':
         config.lr_steps = '200000,400000,500000,550000'
-        config.val_targets = ['agedb_30', 'calfw', 'cfp_ff',  'cfp_fp', 'cplfw', 'lfw', 'vgg2_fp']
-        config.rec = '/train_tmp/celeb_deepglint/train.rec'
+        config.val_targets = [
+            'agedb_30', 'calfw', 'cfp_ff', 'cfp_fp', 'cplfw', 'lfw', 'vgg2_fp'
+        ]
+        config.rec = '/train_tmp/glint360k/train.rec'
         config.num_classes = 360232
         config.batch_size = 64
         config.max_update = 600000
@@ -65,7 +68,7 @@ def generate_config(loss_name, dataset, network):
     elif dataset == 'glint360k_16GPU':
         config.lr_steps = '200000,280000,360000'
         config.val_targets = ['agedb_30', 'cfp_fp', 'lfw']
-        config.rec = '/train_tmp/celeb_deepglint/train.rec'
+        config.rec = '/train_tmp/glint360k/train.rec'
         config.num_classes = 360232
         config.max_update = 400000
 

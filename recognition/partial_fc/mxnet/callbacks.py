@@ -44,7 +44,8 @@ class CallBackVertification(object):
         self.model = model
         self.ver_list = []
         self.ver_name_list = []
-        self.init_dataset(val_targets=config.val_targets, data_dir= os.path.dirname(config.rec),
+        self.init_dataset(val_targets=config.val_targets,
+                          data_dir=os.path.dirname(config.rec),
                           image_size=(config.image_size, config.image_size))
 
     def ver_test(self, num_update):
@@ -52,12 +53,15 @@ class CallBackVertification(object):
         for i in range(len(self.ver_list)):
             acc1, std1, acc2, std2, xnorm, embeddings_list = verification.test(
                 self.ver_list[i], self.model, 10, 10, None, None)
-            logging.info('[%s][%d]XNorm: %f' % (self.ver_name_list[i], num_update, xnorm))
-            logging.info('[%s][%d]Accuracy-Flip: %1.5f+-%1.5f' % (self.ver_name_list[i], num_update, acc2, std2))
+            logging.info('[%s][%d]XNorm: %f' %
+                         (self.ver_name_list[i], num_update, xnorm))
+            logging.info('[%s][%d]Accuracy-Flip: %1.5f+-%1.5f' %
+                         (self.ver_name_list[i], num_update, acc2, std2))
             if acc2 > self.highest_acc_list[i]:
                 self.highest_acc_list[i] = acc2
             logging.info(
-                '[%s][%d]Accuracy-Highest: %1.5f' % (self.ver_name_list[i], num_update, self.highest_acc_list[i]))
+                '[%s][%d]Accuracy-Highest: %1.5f' %
+                (self.ver_name_list[i], num_update, self.highest_acc_list[i]))
             results.append(acc2)
 
     def init_dataset(self, val_targets, data_dir, image_size):
@@ -98,7 +102,9 @@ class CallBackModelSave(object):
     def __call__(self, param):
         num_update = param.num_update
 
-        if num_update in [self.max_step - 10, ] or (num_update % 10000 == 0 and num_update > 0):
+        if num_update in [
+            self.max_step - 10,
+        ] or (num_update % 10000 == 0 and num_update > 0):
 
             # params
             arg, aux = self.model.get_export_params()
@@ -114,16 +120,16 @@ class CallBackModelSave(object):
                 new_arg[key] = hvd.allreduce(tensor, average=True)
 
             if self.rank == 0:
-                mx.model.save_checkpoint(
-                    prefix=self.prefix + "_average",
-                    epoch=0, symbol=_sym,
-                    arg_params=new_arg,
-                    aux_params=new_aux)
-                mx.model.save_checkpoint(
-                    prefix=self.prefix,
-                    epoch=0, symbol=_sym,
-                    arg_params=arg,
-                    aux_params=aux)
+                mx.model.save_checkpoint(prefix=self.prefix + "_average",
+                                         epoch=0,
+                                         symbol=_sym,
+                                         arg_params=new_arg,
+                                         aux_params=new_aux)
+                mx.model.save_checkpoint(prefix=self.prefix,
+                                         epoch=0,
+                                         symbol=_sym,
+                                         arg_params=arg,
+                                         aux_params=aux)
 
         # training is over
         if num_update > self.max_step > 0:
@@ -164,9 +170,13 @@ class CallBackLogging(object):
         self.loss_metric = MetricNdarray()
         t = time.localtime()
 
-        self.summary_writer = SummaryWriter(
-            logdir=os.path.join(self.prefix_dir, "log_tensorboard",
-            "%s_%s_%s" % (str(t.tm_mon), str(t.tm_mday), str(t.tm_hour))), verbose=False)
+        if self.rank == 0:
+            self.summary_writer = SummaryWriter(logdir=os.path.join(
+                self.prefix_dir, "log_tensorboard",
+                "%s_%s_%s" % (str(t.tm_mon), str(t.tm_mday), str(t.tm_hour))),
+                verbose=False)
+        else:
+            time.sleep(2)
 
     def __call__(self, param):
         """Callback to Show speed
@@ -191,19 +201,20 @@ class CallBackLogging(object):
 
                 # summary loss
                 loss_scalar = self.loss_metric.get()
-                self.summary_writer.add_scalar(tag="loss",
-                    value=loss_scalar, global_step=param.num_update)
-                loss_str_format = "[%d][%s]:%.2f " % (param.num_epoch, "loss", loss_scalar)
-                self.loss_metric.reset()
-                # summary speed
-                self.summary_writer.add_scalar(
-                    tag="speed",
-                    value=speed, global_step=param.num_update)
-                self.summary_writer.flush()
+
                 if self.rank == 0:
+                    self.summary_writer.add_scalar(tag="loss", value=loss_scalar, global_step=param.num_update)
+                loss_str_format = "[%d][%s]:%.2f " % (param.num_epoch, "loss",
+                                                      loss_scalar)
+                self.loss_metric.reset()
+
+                if self.rank == 0:
+                    self.summary_writer.add_scalar(tag="speed", value=speed, global_step=param.num_update)
+                    self.summary_writer.flush()
                     logging.info(
                         "Iter:%d Rank:%.2f it/sec Total:%.2f it/sec %s",
                         param.num_update, speed, speed_total, loss_str_format)
+
                 self.tic = time.time()
         else:
             self.init = True

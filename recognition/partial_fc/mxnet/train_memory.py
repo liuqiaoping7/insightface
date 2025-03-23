@@ -1,10 +1,3 @@
-"""
-Author: {Xiang An, XuHan Zhu, Yang Xiao} in DeepGlint,
-Partial FC: Training 10 Million Identities on a Single Machine
-See the original paper:
-https://arxiv.org/abs/2010.05222
-"""
-
 import argparse
 import logging
 import os
@@ -27,6 +20,18 @@ from symbol import resnet
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'symbol'))
 os.environ['MXNET_BACKWARD_DO_MIRROR'] = '0'
+os.environ['MXNET_UPDATE_ON_KVSTORE'] = "0"
+os.environ['MXNET_EXEC_ENABLE_ADDTO'] = "1"
+os.environ['MXNET_USE_TENSORRT'] = "0"
+os.environ['MXNET_GPU_WORKER_NTHREADS'] = "2"
+os.environ['MXNET_GPU_COPY_NTHREADS'] = "1"
+os.environ['MXNET_OPTIMIZER_AGGREGATION_SIZE'] = "54"
+os.environ['HOROVOD_CYCLE_TIME'] = "0.1"
+os.environ['HOROVOD_FUSION_THRESHOLD'] = "67108864"
+os.environ['HOROVOD_NUM_NCCL_STREAMS'] = "2"
+os.environ['MXNET_HOROVOD_NUM_GROUPS'] = "16"
+os.environ['MXNET_EXEC_BULK_EXEC_MAX_NODE_TRAIN_FWD'] = "999"
+os.environ['MXNET_EXEC_BULK_EXEC_MAX_NODE_TRAIN_BWD'] = "25"
 
 
 def parse_args():
@@ -38,14 +43,18 @@ def parse_args():
 
     args, rest = parser.parse_known_args()
     default.generate_config(args.loss, args.dataset, args.network)
-    parser.add_argument('--models-root', default="./test", help='root directory to save model.')
+    parser.add_argument('--models-root',
+                        default="./test",
+                        help='root directory to save model.')
     args = parser.parse_args()
     return args
 
 
 def set_logger(logger, rank, models_root):
-    formatter = logging.Formatter("rank-id:" + str(rank) + ":%(asctime)s-%(message)s")
-    file_handler = logging.FileHandler(os.path.join(models_root, "%d_hist.log" % rank))
+    formatter = logging.Formatter("rank-id:" + str(rank) +
+                                  ":%(asctime)s-%(message)s")
+    file_handler = logging.FileHandler(
+        os.path.join(models_root, "%d_hist.log" % rank))
     stream_handler = logging.StreamHandler(sys.stdout)
     file_handler.setFormatter(formatter)
     stream_handler.setFormatter(formatter)
@@ -90,16 +99,25 @@ def train_net():
     num_local = (config.num_classes + size - 1) // size
     num_sample = int(num_local * config.sample_ratio)
     memory_bank = MemoryBank(
-        num_sample=num_sample, num_local=num_local, rank=rank,
-        local_rank=local_rank, embedding_size=config.embedding_size,
-        prefix=prefix_dir, gpu=True)
+        num_sample=num_sample,
+        num_local=num_local,
+        rank=rank,
+        local_rank=local_rank,
+        embedding_size=config.embedding_size,
+        prefix=prefix_dir,
+        gpu=True)
 
     if config.debug:
         train_iter = DummyIter(config.batch_size, data_shape, 1000 * 10000)
     else:
         train_iter = FaceImageIter(
-            batch_size=config.batch_size, data_shape=data_shape, path_imgrec=config.rec,
-            shuffle=True, rand_mirror=True, context=rank, context_num=size)
+            batch_size=config.batch_size,
+            data_shape=data_shape,
+            path_imgrec=config.rec,
+            shuffle=True,
+            rand_mirror=True,
+            context=rank,
+            context_num=size)
     train_data_iter = mx.io.PrefetchingIter(train_iter)
 
     esym, save_symbol = get_symbol_embedding()
@@ -132,9 +150,9 @@ def train_net():
         memory_optimizer=memory_bank_optimizer)
     #
     if not config.debug and local_rank == 0:
-        cb_vert        = CallBackVertification(esym, train_module)
-    cb_speed       = CallBackLogging(rank, size, prefix_dir)
-    cb_save        = CallBackModelSave(save_symbol, train_module, prefix, rank)
+        cb_vert = CallBackVertification(esym, train_module)
+    cb_speed = CallBackLogging(rank, size, prefix_dir)
+    cb_save = CallBackModelSave(save_symbol, train_module, prefix, rank)
     cb_center_save = CallBackCenterSave(memory_bank)
 
     def call_back_fn(params):
